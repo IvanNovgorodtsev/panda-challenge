@@ -20,13 +20,14 @@ import albumentations
 from sklearn.model_selection import StratifiedKFold
 import matplotlib.pyplot as plt
 from sklearn.metrics import cohen_kappa_score
+from sklearn.metrics import confusion_matrix
 from tqdm import tqdm
 
 data_dir = '/mnt/gpudata1/prostate-cancer-grade-assessment'
 df_train = pd.read_csv(os.path.join(data_dir, 'train.csv'))
 image_folder = os.path.join(data_dir, 'train_images')
 
-DEBUG = False
+DEBUG = True
 kernel_type = 'how_to_train_effnet_b0_to_get_LB_0.86'
 enet_type = 'efficientnet-b3'
 fold = 0
@@ -228,12 +229,43 @@ def val_epoch(loader, get_output=False):
     LOGITS = torch.cat(LOGITS).cpu().numpy()
     PREDS = torch.cat(PREDS).cpu().numpy()
     TARGETS = torch.cat(TARGETS).cpu().numpy()
+
+    print(TARGETS)
+    print(PREDS)
+
+    cf = confusion_matrix(TARGETS, PREDS)
+
+    FP = cf.sum(axis=0) - np.diag(cf)
+    FN = cf.sum(axis=1) - np.diag(cf)
+    TP = np.diag(cf)
+    TN = cf.sum() - (FP + FN + TP)
+
+    # Sensitivity, hit rate, recall, or true positive rate
+    TPR = np.nan_to_num(TP/(TP+FN))
+    # Specificity or true negative rate
+    TNR = np.nan_to_num(TN/(TN+FP) )
+    # Precision or positive predictive value
+    PPV = np.nan_to_num(TP/(TP+FP))
+
+    # Negative predictive value
+    NPV = np.nan_to_num(TN/(TN+FN))
+    # Fall out or false positive rate
+    FPR = np.nan_to_num(FP/(FP+TN))
+    # False negative rate
+    FNR = np.nan_to_num(FN/(TP+FN))
+    # False discovery rate
+    FDR = np.nan_to_num(FP/(TP+FP))
+
+    F1 = np.nan_to_num(2*(PPV*TPR)/(PPV+TPR))
+    # Overall accuracy
+    ACCURACY = np.nan_to_num((TP+TN)/(TP+FP+FN+TN)/cf[0].size).sum()/cf[0].size
+
     acc = (PREDS == TARGETS).mean() * 100.
 
     qwk = cohen_kappa_score(PREDS, TARGETS, weights='quadratic')
     qwk_k = cohen_kappa_score(PREDS[df_valid['data_provider'] == 'karolinska'], df_valid[df_valid['data_provider'] == 'karolinska'].isup_grade.values, weights='quadratic')
     qwk_r = cohen_kappa_score(PREDS[df_valid['data_provider'] == 'radboud'], df_valid[df_valid['data_provider'] == 'radboud'].isup_grade.values, weights='quadratic')
-    print('qwk', qwk, 'qwk_k', qwk_k, 'qwk_r', qwk_r)
+    print('acc', ACCURACY,'qwk', qwk, 'qwk_k', qwk_k, 'qwk_r', qwk_r)
 
     if get_output:
         return LOGITS
