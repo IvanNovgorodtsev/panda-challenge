@@ -27,7 +27,7 @@ data_dir = '/mnt/gpudata1/prostate-cancer-grade-assessment'
 df_train = pd.read_csv(os.path.join(data_dir, 'train.csv'))
 image_folder = os.path.join(data_dir, 'train_images')
 
-DEBUG = True
+DEBUG = False
 kernel_type = 'how_to_train_effnet_b0_to_get_LB_0.86'
 enet_type = 'efficientnet-b3'
 fold = 0
@@ -242,8 +242,10 @@ def val_epoch(loader, get_output=False):
 
     # Sensitivity, hit rate, recall, or true positive rate
     TPR = np.nan_to_num(TP/(TP+FN))
+    TPR = TPR.sum()/cf[0].size
     # Specificity or true negative rate
-    TNR = np.nan_to_num(TN/(TN+FP) )
+    TNR = np.nan_to_num(TN/(TN+FP))
+    TNR = TNR.sum()/cf[0].size
     # Precision or positive predictive value
     PPV = np.nan_to_num(TP/(TP+FP))
 
@@ -257,15 +259,13 @@ def val_epoch(loader, get_output=False):
     FDR = np.nan_to_num(FP/(TP+FP))
 
     F1 = np.nan_to_num(2*(PPV*TPR)/(PPV+TPR))
-    # Overall accuracy
-    ACCURACY = np.nan_to_num((TP+TN)/(TP+FP+FN+TN)/cf[0].size).sum()/cf[0].size
-
+    F1 = F1.sum()/cf[0].size
     acc = (PREDS == TARGETS).mean() * 100.
 
     qwk = cohen_kappa_score(PREDS, TARGETS, weights='quadratic')
     qwk_k = cohen_kappa_score(PREDS[df_valid['data_provider'] == 'karolinska'], df_valid[df_valid['data_provider'] == 'karolinska'].isup_grade.values, weights='quadratic')
     qwk_r = cohen_kappa_score(PREDS[df_valid['data_provider'] == 'radboud'], df_valid[df_valid['data_provider'] == 'radboud'].isup_grade.values, weights='quadratic')
-    print('acc', ACCURACY,'qwk', qwk, 'qwk_k', qwk_k, 'qwk_r', qwk_r)
+    print('Sensitivity: ', TPR,'Specificity: ', TNR,'F1: ', F1,'qwk', qwk, 'qwk_k', qwk_k, 'qwk_r', qwk_r)
 
     if get_output:
         return LOGITS
