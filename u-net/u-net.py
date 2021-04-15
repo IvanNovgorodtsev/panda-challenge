@@ -1,5 +1,21 @@
 import torch
 import torch.nn as nn
+import numpy as np
+from PIL import Image
+import cv2
+
+
+
+
+def load_image(infilename):
+    """This function loads an image into memory when you give it
+       the path of the image
+    """
+    img = Image.open(infilename, 'r')
+    img.load()
+    data = np.asarray(img, dtype="float32")
+    return data
+
 
 def double_conv(in_c, out_c):
     conv = nn.Sequential(
@@ -87,8 +103,15 @@ class UNet(nn.Module):
         return x
 
 if __name__ == "__main__":
-    image = torch.rand((1,1,572,572))
+    image = load_image('data/images/image_0.jpg')
+    #image = load_image('/home/ivan/Pictures/Screenshot from 2020-11-04 22-31-08.png')
+    rgba = cv2.cvtColor(image, cv2.COLOR_RGB2RGBA)
+    rgba[:, :, 3] = 255
+    print(rgba.shape)
+    print(rgba.transpose((-1, 0, 1)).shape)
+    # print(rgba)
+    input_data = torch.tensor(rgba)
     model = UNet()
-    model.forward(image)
+    model.forward(input_data)
 
 
