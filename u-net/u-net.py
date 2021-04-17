@@ -27,8 +27,12 @@ def double_conv(in_c, out_c):
     return conv
 
 def crop_img(tensor, target_tensor):
+    # square images
     target_size = target_tensor.size()[2]
-    tensor_size = tensor.size()[2]
+    if tensor.size()[2] % 2 == 1:
+        tensor_size = tensor.size()[2]-1
+    else:
+        tensor_size = tensor.size()[2]
     delta = tensor_size - target_size
     delta = delta // 2
     return tensor[:, :, delta:tensor_size-delta, delta:tensor_size-delta]
@@ -36,7 +40,7 @@ def crop_img(tensor, target_tensor):
 class UNet(nn.Module):
     def __init__(self):
         super(UNet, self).__init__()
-        self.max_pool_2x2 = nn.MaxPool2d(kernel_size=3, stride=2)
+        self.max_pool_2x2 = nn.MaxPool2d(kernel_size=2, stride=2)
         self.down_conv_1 = double_conv(3, 64)
         self.down_conv_2 = double_conv(64, 128)
         self.down_conv_3 = double_conv(128, 256)
@@ -45,29 +49,28 @@ class UNet(nn.Module):
 
         ## transposed convolutions
         # in_channels, out_channels, kernel_size, stride
-        self.up_trans_1 = nn.ConvTranspose2d(1024, 512, 3, 2)
+        self.up_trans_1 = nn.ConvTranspose2d(1024, 512, 2, 2)
         self.up_conv_1 = double_conv(1024, 512)
 
-        self.up_trans_2 = nn.ConvTranspose2d(512, 256, 3, 2)
+        self.up_trans_2 = nn.ConvTranspose2d(512, 256, 2, 2)
         self.up_conv_2 = double_conv(512, 256)
 
-        self.up_trans_3 = nn.ConvTranspose2d(256, 128, 3, 2)
+        self.up_trans_3 = nn.ConvTranspose2d(256, 128, 2, 2)
         self.up_conv_3 = double_conv(256, 128)
 
-        self.up_trans_4 = nn.ConvTranspose2d(128, 64, 3, 2)
+        self.up_trans_4 = nn.ConvTranspose2d(128, 64, 2, 2)
         self.up_conv_4 = double_conv(128, 64)
 
         # for multiple object classification increase the number of output channels
-        self.out = nn.Conv2d(64, 2, 1)
+        self.out = nn.Conv2d(64, 3, 1)
 
 
     def forward(self, image):
-        # bs, channel, hight, width
+        # batch size, channel, hight, width
         # encoder part
 
         # input image
         x1 = self.down_conv_1(image) # this part is passed to decoder
-
         # max pooling
         x2 = self.max_pool_2x2(x1)
 
@@ -85,30 +88,40 @@ class UNet(nn.Module):
         # decoder part
         x = self.up_trans_1(x9)
         y = crop_img(x7, x)
-        x = self.up_conv_1(torch.cat([x, y], 3))
+        x = self.up_conv_1(torch.cat([x, y], 1))
 
         x = self.up_trans_2(x)
         y = crop_img(x5, x)
-        x = self.up_conv_2(torch.cat([x, y], 3))
+        x = self.up_conv_2(torch.cat([x, y], 1))
 
         x = self.up_trans_3(x)
         y = crop_img(x3, x)
-        x = self.up_conv_3(torch.cat([x, y], 3))
+        x = self.up_conv_3(torch.cat([x, y], 1))
 
         x = self.up_trans_4(x)
         y = crop_img(x1, x)
-        x = self.up_conv_4(torch.cat([x, y], 3))
+        x = self.up_conv_4(torch.cat([x, y], 1))
 
         x = self.out(x)
+        print(x.shape)
         return x
 
 if __name__ == "__main__":
     image = load_image('data/images/image_0.jpg')
+    mask = load_image('data/masks/mask_0.jpg')
+
     image = np.expand_dims(image,0)
-    image = image.transpose((0,3,1,2))
+    image = image.transpose(0,3,1,2)
     input_data = torch.tensor(image)
-    print(input_data.shape)
+
+    mask = np.expand_dims(mask, 0)
+    print(mask.shape)
+    mask = mask.transpose(0, 3, 1, 2)
+    print(mask.shape)
+    mask_data = torch.tensor(mask)
+
+    # batch, channels, height, width
     model = UNet()
-    model.forward(input_data)
+    print(model(input_data))
 
 
