@@ -2,15 +2,9 @@ import torch
 import torch.nn as nn
 import numpy as np
 from PIL import Image
-import cv2
-
-
-
+from torchsummary import summary
 
 def load_image(infilename):
-    """This function loads an image into memory when you give it
-       the path of the image
-    """
     img = Image.open(infilename, 'r')
     img.load()
     data = np.asarray(img, dtype="float32")
@@ -19,9 +13,9 @@ def load_image(infilename):
 
 def double_conv(in_c, out_c):
     conv = nn.Sequential(
-        nn.Conv2d(in_c, out_c, kernel_size=3),
+        nn.Conv2d(in_c, out_c, kernel_size=3, padding=1),
         nn.ReLU(inplace=True),
-        nn.Conv2d(out_c, out_c, kernel_size=3),
+        nn.Conv2d(out_c, out_c, kernel_size=3, padding=1),
         nn.ReLU(inplace=True)
     )
     return conv
@@ -103,25 +97,40 @@ class UNet(nn.Module):
         x = self.up_conv_4(torch.cat([x, y], 1))
 
         x = self.out(x)
-        print(x.shape)
         return x
 
+
 if __name__ == "__main__":
+
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    model = UNet()
+    model = model.to(device)
+    #summary(model, input_size=(3, 128, 128))
+
     image = load_image('data/images/image_0.jpg')
     mask = load_image('data/masks/mask_0.jpg')
 
     image = np.expand_dims(image,0)
     image = image.transpose(0,3,1,2)
-    input_data = torch.tensor(image)
+    input_data = torch.tensor(image).to(device)
 
-    mask = np.expand_dims(mask, 0)
-    print(mask.shape)
-    mask = mask.transpose(0, 3, 1, 2)
-    print(mask.shape)
+    #mask = np.expand_dims(mask, 0)
+    mask = mask.transpose(2, 0, 1)
     mask_data = torch.tensor(mask)
 
-    # batch, channels, height, width
-    model = UNet()
-    print(model(input_data))
+    criterion = torch.nn.CrossEntropyLoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
+    y_true = torch.argmax(mask_data, dim=0)
+    y_true = y_true.unsqueeze(0)
+
+    for t in range(100):
+        y_pred = model(input_data)
+        loss = criterion(y_pred, y_true)
+        print(t, loss.item())
+
+        # Zero gradients, perform a backward pass, and update the weights.
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
 
 
