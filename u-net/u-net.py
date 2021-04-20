@@ -2,7 +2,9 @@ import torch
 import torch.nn as nn
 import numpy as np
 from PIL import Image
+import torch.nn.functional as F
 from torchsummary import summary
+import time
 
 def load_image(infilename):
     img = Image.open(infilename, 'r')
@@ -32,7 +34,7 @@ def crop_img(tensor, target_tensor):
     return tensor[:, :, delta:tensor_size-delta, delta:tensor_size-delta]
 
 class UNet(nn.Module):
-    def __init__(self):
+    def __init__(self, nb_classes):
         super(UNet, self).__init__()
         self.max_pool_2x2 = nn.MaxPool2d(kernel_size=2, stride=2)
         self.down_conv_1 = double_conv(3, 64)
@@ -56,7 +58,7 @@ class UNet(nn.Module):
         self.up_conv_4 = double_conv(128, 64)
 
         # for multiple object classification increase the number of output channels
-        self.out = nn.Conv2d(64, 3, 1)
+        self.out = nn.Conv2d(64, nb_classes, 1)
 
 
     def forward(self, image):
@@ -102,29 +104,35 @@ class UNet(nn.Module):
 
 if __name__ == "__main__":
 
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    model = UNet()
+    device = torch.device('cpu')
+    model = UNet(nb_classes=6)
     model = model.to(device)
-    #summary(model, input_size=(3, 128, 128))
-
-    image = load_image('data/images/image_0.jpg')
-    mask = load_image('data/masks/mask_0.jpg')
-
-    image = np.expand_dims(image,0)
-    image = image.transpose(0,3,1,2)
-    input_data = torch.tensor(image).to(device)
-
-    #mask = np.expand_dims(mask, 0)
-    mask = mask.transpose(2, 0, 1)
-    mask_data = torch.tensor(mask)
-
     criterion = torch.nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
-    y_true = torch.argmax(mask_data, dim=0)
-    y_true = y_true.unsqueeze(0)
+    #summary(model, input_size=(3, 128, 128))
 
-    for t in range(100):
+
+    for t in range(99):
+        image = load_image(f'data/images/image_{t}.jpg')
+        mask = np.load(f'data/masks/mask_{t}.npy')
+
+        # loading images as 3 channel RGB
+        image = np.expand_dims(image, 0)
+        image = image.transpose(0, 3, 1, 2)
+        input_data = torch.tensor(image).to(device)
+
+        # loading masks as numpy 6 channel arrays
+        mask_data = torch.tensor(mask).to(device)
+
+        # argmax to combine all channels?
+        y_true = torch.argmax(mask_data, dim=0)
+        # adding one BATCH dimension
+        y_true = y_true.unsqueeze(0)
+        print(y_true.shape)
+        print(y_true.min(), y_true.max())
+        time.sleep(60)
         y_pred = model(input_data)
+
         loss = criterion(y_pred, y_true)
         print(t, loss.item())
 
@@ -132,5 +140,19 @@ if __name__ == "__main__":
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
+
+    model.eval()
+    image = load_image('data/images/image_102.jpg')
+    image = np.expand_dims(image, 0)
+    image = image.transpose(0, 3, 1, 2)
+    input_data = torch.tensor(image).to(device)
+
+    pred = model(input_data)
+    # The loss functions include the sigmoid function.
+    pred = F.sigmoid(pred)
+    pred = pred.data.cpu().numpy()
+    print(pred.shape)
+    np.save('pred', pred)
+
 
 
