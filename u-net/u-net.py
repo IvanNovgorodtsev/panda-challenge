@@ -44,7 +44,6 @@ class UNet(nn.Module):
         self.down_conv_5 = double_conv(512, 1024)
 
         ## transposed convolutions
-        # in_channels, out_channels, kernel_size, stride
         self.up_trans_1 = nn.ConvTranspose2d(1024, 512, 2, 2)
         self.up_conv_1 = double_conv(1024, 512)
 
@@ -57,26 +56,23 @@ class UNet(nn.Module):
         self.up_trans_4 = nn.ConvTranspose2d(128, 64, 2, 2)
         self.up_conv_4 = double_conv(128, 64)
 
-        # for multiple object classification increase the number of output channels
         self.out = nn.Conv2d(64, nb_classes, 1)
 
 
     def forward(self, image):
-        # batch size, channel, hight, width
         # encoder part
-
         # input image
-        x1 = self.down_conv_1(image) # this part is passed to decoder
+        x1 = self.down_conv_1(image) # this is passed to decoder
         # max pooling
         x2 = self.max_pool_2x2(x1)
 
-        x3 = self.down_conv_2(x2) # this part is passed to decoder
+        x3 = self.down_conv_2(x2) # this is passed to decoder
         x4 = self.max_pool_2x2(x3)
 
-        x5 = self.down_conv_3(x4) # this part is passed to decoder
+        x5 = self.down_conv_3(x4) # this is passed to decoder
         x6 = self.max_pool_2x2(x5)
 
-        x7 = self.down_conv_4(x6) # this part is passed to decoder
+        x7 = self.down_conv_4(x6) # this is passed to decoder
         x8 = self.max_pool_2x2(x7)
 
         x9 = self.down_conv_5(x8)
@@ -104,15 +100,15 @@ class UNet(nn.Module):
 
 if __name__ == "__main__":
 
-    device = torch.device('cpu')
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = UNet(nb_classes=6)
     model = model.to(device)
-    criterion = torch.nn.CrossEntropyLoss()
+    criterion = torch.nn.BCEWithLogitsLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
     #summary(model, input_size=(3, 128, 128))
 
 
-    for t in range(99):
+    for t in range(198):
         image = load_image(f'data/images/image_{t}.jpg')
         mask = np.load(f'data/masks/mask_{t}.npy')
 
@@ -124,13 +120,8 @@ if __name__ == "__main__":
         # loading masks as numpy 6 channel arrays
         mask_data = torch.tensor(mask).to(device)
 
-        # argmax to combine all channels?
-        y_true = torch.argmax(mask_data, dim=0)
-        # adding one BATCH dimension
+        y_true = mask_data
         y_true = y_true.unsqueeze(0)
-        print(y_true.shape)
-        print(y_true.min(), y_true.max())
-        time.sleep(60)
         y_pred = model(input_data)
 
         loss = criterion(y_pred, y_true)
@@ -142,13 +133,12 @@ if __name__ == "__main__":
         optimizer.step()
 
     model.eval()
-    image = load_image('data/images/image_102.jpg')
+    image = load_image('data/images/image_199.jpg')
     image = np.expand_dims(image, 0)
     image = image.transpose(0, 3, 1, 2)
     input_data = torch.tensor(image).to(device)
 
     pred = model(input_data)
-    # The loss functions include the sigmoid function.
     pred = F.sigmoid(pred)
     pred = pred.data.cpu().numpy()
     print(pred.shape)
