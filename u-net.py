@@ -108,9 +108,9 @@ if __name__ == "__main__":
     #summary(model, input_size=(3, 128, 128))
 
 
-    for t in range(198):
-        image = load_image(f'data/images/image_{t}.jpg')
-        mask = np.load(f'data/masks/mask_{t}.npy')
+    for t in range(1998):
+        image = load_image(f'u-net/data/images/image_{t}.jpg')
+        mask = np.load(f'u-net/data/masks/mask_{t}.npy')
 
         # loading images as 3 channel RGB
         image = np.expand_dims(image, 0)
@@ -133,13 +133,13 @@ if __name__ == "__main__":
         optimizer.step()
 
     model.eval()
-    image = load_image('data/images/image_199.jpg')
+    image = load_image('data/images/image_1999.jpg')
     image = np.expand_dims(image, 0)
     image = image.transpose(0, 3, 1, 2)
     input_data = torch.tensor(image).to(device)
 
     pred = model(input_data)
-    pred = F.sigmoid(pred)
+    pred = torch.sigmoid(pred)
     pred = pred.data.cpu().numpy()
     print(pred.shape)
     np.save('pred', pred)
