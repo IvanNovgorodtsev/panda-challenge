@@ -1,0 +1,16 @@
+# ignoring environment
+env/
+.idea/
+.ipynb_checkpoints/
+input/
+notebooks/
+
+# ignoring data files
+data/masks/
+data/images/
+
+# ignoring testing for u-net
+u-net/data/images/
+u-net/data/masks/
+
+
