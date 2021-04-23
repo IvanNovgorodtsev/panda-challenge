@@ -1,3 +1,4 @@
+import sys
 import torch
 import torch.nn as nn
 import numpy as np
@@ -5,6 +6,7 @@ from PIL import Image
 import torch.nn.functional as F
 from torchsummary import summary
 import time
+from unet.dataset import *
 
 def load_image(infilename):
     img = Image.open(infilename, 'r')
@@ -100,37 +102,36 @@ class UNet(nn.Module):
 
 if __name__ == "__main__":
 
+    batch_size = 2
+    num_epochs = 2
+
+    dataset = Dataset('unet/data/images','unet/data/masks')
+    dataset_size = len(dataset)
+    train_loader = DataLoader(dataset, batch_size=batch_size)
+
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = UNet(nb_classes=6)
     model = model.to(device)
     criterion = torch.nn.BCEWithLogitsLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
-    #summary(model, input_size=(3, 128, 128))
+    # #summary(model, input_size=(3, 128, 128))
+
+    for epoch in range(num_epochs):
+        for i, (inputs, labels) in enumerate(train_loader):
+            input_data = torch.tensor(inputs).to(device)
+            mask_data = torch.tensor(labels).to(device)
 
 
-    for t in range(1998):
-        image = load_image(f'u-net/data/images/image_{t}.jpg')
-        mask = np.load(f'u-net/data/masks/mask_{t}.npy')
+            y_true = mask_data
+            y_pred = model(input_data)
 
-        # loading images as 3 channel RGB
-        image = np.expand_dims(image, 0)
-        image = image.transpose(0, 3, 1, 2)
-        input_data = torch.tensor(image).to(device)
+            loss = criterion(y_pred, y_true)
+            print(f'epoch: {epoch}, i: {i}, loss: {loss.item()}')
 
-        # loading masks as numpy 6 channel arrays
-        mask_data = torch.tensor(mask).to(device)
-
-        y_true = mask_data
-        y_true = y_true.unsqueeze(0)
-        y_pred = model(input_data)
-
-        loss = criterion(y_pred, y_true)
-        print(t, loss.item())
-
-        # Zero gradients, perform a backward pass, and update the weights.
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
+            # Zero gradients, perform a backward pass, and update the weights.
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
 
     model.eval()
     image = load_image('data/images/image_1999.jpg')
