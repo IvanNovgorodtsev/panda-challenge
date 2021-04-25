@@ -1,0 +1,17 @@
+Mon Feb 15 14:00:55 2021 Epoch 1, lr: 0.0000300, train loss: 0.49982, val loss: 1.55145, acc: 34.13371, qwk: 0.63913
+Mon Feb 15 14:24:20 2021 Epoch 2, lr: 0.0003000, train loss: 0.45379, val loss: 0.41359, acc: 34.13371, qwk: 0.57562
+Mon Feb 15 14:47:45 2021 Epoch 3, lr: 0.0000300, train loss: 0.38920, val loss: 0.38150, acc: 39.64218, qwk: 0.69557
+Mon Feb 15 15:11:10 2021 Epoch 4, lr: 0.0002965, train loss: 0.39907, val loss: 0.38917, acc: 42.56121, qwk: 0.65340
+Mon Feb 15 15:34:34 2021 Epoch 5, lr: 0.0002921, train loss: 0.37680, val loss: 0.36381, acc: 47.22222, qwk: 0.71559
+Mon Feb 15 15:57:59 2021 Epoch 6, lr: 0.0002861, train loss: 0.36580, val loss: 0.42174, acc: 34.41620, qwk: 0.70745
+Mon Feb 15 16:21:23 2021 Epoch 7, lr: 0.0002785, train loss: 0.35298, val loss: 0.35694, acc: 32.62712, qwk: 0.68366
+Mon Feb 15 16:44:48 2021 Epoch 8, lr: 0.0002694, train loss: 0.34393, val loss: 0.33491, acc: 45.05650, qwk: 0.74002
+Mon Feb 15 17:08:13 2021 Epoch 9, lr: 0.0002589, train loss: 0.33695, val loss: 0.32828, acc: 48.44633, qwk: 0.74578
+Mon Feb 15 17:31:38 2021 Epoch 10, lr: 0.0002471, train loss: 0.32941, val loss: 0.32749, acc: 43.54991, qwk: 0.73000
+Mon Feb 15 17:55:03 2021 Epoch 11, lr: 0.0002342, train loss: 0.32435, val loss: 0.42709, acc: 48.87006, qwk: 0.71634
+Mon Feb 15 18:18:29 2021 Epoch 12, lr: 0.0002203, train loss: 0.31366, val loss: 0.36963, acc: 52.49529, qwk: 0.74147
+Mon Feb 15 18:41:57 2021 Epoch 13, lr: 0.0002055, train loss: 0.30854, val loss: 0.35222, acc: 51.55367, qwk: 0.76023
+Mon Feb 15 19:05:24 2021 Epoch 14, lr: 0.0001901, train loss: 0.30344, val loss: 0.40419, acc: 52.96610, qwk: 0.71221
+Mon Feb 15 19:28:52 2021 Epoch 15, lr: 0.0001743, train loss: 0.29772, val loss: 0.38881, acc: 53.95480, qwk: 0.74762
+Mon Feb 15 19:52:20 2021 Epoch 16, lr: 0.0001581, train loss: 0.28972, val loss: 0.31642, acc: 52.07156, qwk: 0.75212
+Mon Feb 15 20:15:47 2021 Epoch 17, lr: 0.0001419, train loss: 0.28232, val loss: 0.34215, acc: 53.95480, qwk: 0.76573
