@@ -104,28 +104,25 @@ if __name__ == "__main__":
 
     batch_size = 2
     num_epochs = 2
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    print(f'DEVICE: {device}')
 
-    dataset = Dataset('unet/data/images','unet/data/masks')
+    dataset = Dataset('data/images','data/masks', device)
     dataset_size = len(dataset)
     train_loader = DataLoader(dataset, batch_size=batch_size)
 
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = UNet(nb_classes=6)
     model = model.to(device)
+    # sparcecategoricalentropy for number in targets
     criterion = torch.nn.BCEWithLogitsLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
     # #summary(model, input_size=(3, 128, 128))
 
     for epoch in range(num_epochs):
         for i, (inputs, labels) in enumerate(train_loader):
-            input_data = torch.tensor(inputs).to(device)
-            mask_data = torch.tensor(labels).to(device)
 
-
-            y_true = mask_data
-            y_pred = model(input_data)
-
-            loss = criterion(y_pred, y_true)
+            y_pred = model(inputs)
+            loss = criterion(y_pred, labels)
             print(f'epoch: {epoch}, i: {i}, loss: {loss.item()}')
 
             # Zero gradients, perform a backward pass, and update the weights.
