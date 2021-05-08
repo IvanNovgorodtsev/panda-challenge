@@ -27,6 +27,15 @@ def get_tiles(img, mode=0):
     img3 = img2.reshape(img2.shape[0] // tile_size, tile_size, img2.shape[1] // tile_size, tile_size, 3)
     img3.shape
     print(f'img3.shape: {img3.shape}')
+
+    # reshaping image
+    img3 = img3.transpose(0, 2, 1, 3, 4).reshape(-1, tile_size, tile_size, 3)
+    print(f'img3.shape: {img3.shape}')
+    
+    # if number of tiles we prepared is lower than n_tiles defined, pad more
+    print(f'len(img3):{len(img3)} n_tiles: {n_tiles}')
+    if len(img3) < n_tiles:
+        img3 = np.pad(img3, [[0, n_tiles - len(img3)], [0, 0], [0, 0], [0, 0]], constant_values=255)
     time.sleep(60)
     return 0
 
