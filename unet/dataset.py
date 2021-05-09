@@ -31,13 +31,22 @@ def get_tiles(img, mode=0):
     # reshaping image
     img3 = img3.transpose(0, 2, 1, 3, 4).reshape(-1, tile_size, tile_size, 3)
     print(f'img3.shape: {img3.shape}')
-    
+
     # if number of tiles we prepared is lower than n_tiles defined, pad more
     print(f'len(img3):{len(img3)} n_tiles: {n_tiles}')
     if len(img3) < n_tiles:
         img3 = np.pad(img3, [[0, n_tiles - len(img3)], [0, 0], [0, 0], [0, 0]], constant_values=255)
+
+    idxs = np.argsort(img3.reshape(img3.shape[0],-1).sum(-1))[:n_tiles]
+    print(f'idxs: {idxs}')
+
+    img3 = img3[idxs]
+    print(f'img3.shape: {img3.shape}')
+
+    for i in range(len(img3)):
+        result.append({'img': img3[i], 'idx': i})
     time.sleep(60)
-    return 0
+    return result
 
 class Dataset(Dataset):
     def __init__(self, images_dir, masks_dir, device, transform=None):
