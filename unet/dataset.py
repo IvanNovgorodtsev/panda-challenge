@@ -9,6 +9,7 @@ import openslide
 
 n_tiles = 16
 tile_size = 256
+image_size = 256
 
 def get_tiles(img, mode=0):
     
@@ -37,8 +38,10 @@ def get_tiles(img, mode=0):
     if len(img3) < n_tiles:
         img3 = np.pad(img3, [[0, n_tiles - len(img3)], [0, 0], [0, 0], [0, 0]], constant_values=255)
 
+    # getting the indexes of the tiles
     idxs = np.argsort(img3.reshape(img3.shape[0],-1).sum(-1))[:n_tiles]
     print(f'idxs: {idxs}')
+
 
     img3 = img3[idxs]
     print(f'img3.shape: {img3.shape}')
@@ -71,17 +74,30 @@ class Dataset(Dataset):
         mask = io.imread(mask_path)
 
         tiles = get_tiles(image)
+        n_row_tiles = int(np.sqrt(self.n_tiles))
+        idxes = list(range(self.n_tiles))
+        images = np.zeros((image_size * n_row_tiles, image_size * n_row_tiles, 3))
+        for h in range(n_row_tiles):
+            for w in range(n_row_tiles):
+                i = h * n_row_tiles + w
 
+                if len(tiles) > idxes[i]:
+                    this_img = tiles[idxes[i]]['img']
+                else:
+                    this_img = np.ones((self.image_size, self.image_size, 3)).astype(np.uint8) * 255
+                this_img = 255 - this_img
+                if self.transform is not None:
+                    this_img = self.transform(image=this_img)['image']
+                h1 = h * image_size
+                w1 = w * image_size
+                images[h1:h1 + image_size, w1:w1 + image_size] = this_img
 
-        # loading images as 3 channel RGB
-        image = image.transpose(2, 0, 1)
+        images = images.astype(np.float32)
+        images /= 255
+        images = images.transpose(2, 0, 1)
 
-        if self.transform is not None:
-            augmentations = self.transform(image=image, mask=mask)
-            image = augmentations["image"]
-            mask = augmentations["mask"]
 
         image = torch.tensor(image).to(self.device)
         mask = torch.tensor(mask).to(self.device)
 
-        return image, mask
+        return images.shape
