@@ -51,6 +51,24 @@ def get_tiles(img, mode=0):
     time.sleep(60)
     return result
 
+def tiles_to_img(tiles):
+    n_row_tiles = int(np.sqrt(self.n_tiles))
+    idxes = list(range(self.n_tiles))
+    images = np.zeros((image_size * n_row_tiles, image_size * n_row_tiles, 3))
+    for h in range(n_row_tiles):
+        for w in range(n_row_tiles):
+            i = h * n_row_tiles + w
+
+            if len(tiles) > idxes[i]:
+                this_img = tiles[idxes[i]]['img']
+            else:
+                this_img = np.ones((image_size, image_size, 3)).astype(np.uint8) * 255
+            this_img = 255 - this_img
+            h1 = h * image_size
+            w1 = w * image_size
+            images[h1:h1 + image_size, w1:w1 + image_size] = this_img
+    return images
+
 class Dataset(Dataset):
     def __init__(self, images_dir, masks_dir, device, transform=None):
         self.image_dir = images_dir
@@ -71,26 +89,14 @@ class Dataset(Dataset):
         image = image.read_region((0,0), 2, image.level_dimensions[2])
         image = np.asarray(image)[:,:,0:3]
         print(img_path)
-        mask = io.imread(mask_path)
+        mask = openslide.OpenSlide(mask_path)
+        mask = mask.read_region((0,0), 2, image.level_dimensions[2])
+        mask = np.asarray(mask)[:,:,0:3]
 
-        tiles = get_tiles(image)
-        n_row_tiles = int(np.sqrt(self.n_tiles))
-        idxes = list(range(self.n_tiles))
-        images = np.zeros((image_size * n_row_tiles, image_size * n_row_tiles, 3))
-        for h in range(n_row_tiles):
-            for w in range(n_row_tiles):
-                i = h * n_row_tiles + w
+        image_tiles = get_tiles(image)
+        mask_tiles = get_tiles(mask)
 
-                if len(tiles) > idxes[i]:
-                    this_img = tiles[idxes[i]]['img']
-                else:
-                    this_img = np.ones((self.image_size, self.image_size, 3)).astype(np.uint8) * 255
-                this_img = 255 - this_img
-                if self.transform is not None:
-                    this_img = self.transform(image=this_img)['image']
-                h1 = h * image_size
-                w1 = w * image_size
-                images[h1:h1 + image_size, w1:w1 + image_size] = this_img
+        images = tiles_to_img(image_tiles)
 
         images = images.astype(np.float32)
         images /= 255
