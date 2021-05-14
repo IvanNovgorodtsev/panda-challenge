@@ -120,7 +120,8 @@ if __name__ == "__main__":
 
     for epoch in range(num_epochs):
         for i, (inputs, labels) in enumerate(train_loader):
-
+            print(inputs, labels)
+            time.sleep(60)
             y_pred = model(inputs)
             loss = criterion(y_pred, labels)
             print(f'epoch: {epoch}, i: {i}, loss: {loss.item()}')

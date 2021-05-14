@@ -48,12 +48,12 @@ def get_tiles(img, mode=0):
 
     for i in range(len(img3)):
         result.append({'img': img3[i], 'idx': i})
-    time.sleep(60)
+    time.sleep(5)
     return result
 
 def tiles_to_img(tiles):
-    n_row_tiles = int(np.sqrt(self.n_tiles))
-    idxes = list(range(self.n_tiles))
+    n_row_tiles = int(np.sqrt(n_tiles))
+    idxes = list(range(n_tiles))
     images = np.zeros((image_size * n_row_tiles, image_size * n_row_tiles, 3))
     for h in range(n_row_tiles):
         for w in range(n_row_tiles):
@@ -90,13 +90,17 @@ class Dataset(Dataset):
         image = np.asarray(image)[:,:,0:3]
         print(img_path)
         mask = openslide.OpenSlide(mask_path)
-        mask = mask.read_region((0,0), 2, image.level_dimensions[2])
+        mask = mask.read_region((0,0), 2, mask.level_dimensions[2])
         mask = np.asarray(mask)[:,:,0:3]
 
         image_tiles = get_tiles(image)
         mask_tiles = get_tiles(mask)
 
+
         images = tiles_to_img(image_tiles)
+        masks = tiles_to_img(mask_tiles)
+        print(f'image.shape: {images.shape}')
+        print(f'masks.shape: {masks.shape}')
 
         images = images.astype(np.float32)
         images /= 255
@@ -106,4 +110,4 @@ class Dataset(Dataset):
         image = torch.tensor(image).to(self.device)
         mask = torch.tensor(mask).to(self.device)
 
-        return images.shape
+        return images.shape, masks.shape
