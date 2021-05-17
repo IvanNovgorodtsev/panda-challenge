@@ -102,34 +102,34 @@ class UNet(nn.Module):
 
 if __name__ == "__main__":
 
-    batch_size = 2
-    num_epochs = 2
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    batch_size = 3
+    num_epochs = 1
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    # device = torch.device("cpu")
     print(f'DEVICE: {device}')
 
-    dataset = Dataset('data/images','data/masks', device)
+    dataset = Dataset('/kaggle/input/prostate-cancer-grade-assessment/train_images', '/kaggle/input/prostate-cancer-grade-assessment/train_label_masks', device)
     dataset_size = len(dataset)
     train_loader = DataLoader(dataset, batch_size=batch_size)
 
     model = UNet(nb_classes=6)
     model = model.to(device)
     # sparcecategoricalentropy for number in targets
-    criterion = torch.nn.BCEWithLogitsLoss()
+    criterion = torch.nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
     # #summary(model, input_size=(3, 128, 128))
 
     for epoch in range(num_epochs):
         for i, (inputs, labels) in enumerate(train_loader):
-            print(inputs, labels)
-            time.sleep(60)
+            # labels = labels.squeeze()
             y_pred = model(inputs)
+            # print(y_pred.shape)
             loss = criterion(y_pred, labels)
-            print(f'epoch: {epoch}, i: {i}, loss: {loss.item()}')
-
             # Zero gradients, perform a backward pass, and update the weights.
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
+            print(f'epoch: {epoch}, i: {i}, loss: {loss.item()}')
 
     model.eval()
     image = load_image('data/images/image_1999.jpg')
