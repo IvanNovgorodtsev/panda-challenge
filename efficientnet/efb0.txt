@@ -15,3 +15,4 @@ Mon Feb 15 19:05:24 2021 Epoch 14, lr: 0.0001901, train loss: 0.30344, val loss:
 Mon Feb 15 19:28:52 2021 Epoch 15, lr: 0.0001743, train loss: 0.29772, val loss: 0.38881, acc: 53.95480, qwk: 0.74762
 Mon Feb 15 19:52:20 2021 Epoch 16, lr: 0.0001581, train loss: 0.28972, val loss: 0.31642, acc: 52.07156, qwk: 0.75212
 Mon Feb 15 20:15:47 2021 Epoch 17, lr: 0.0001419, train loss: 0.28232, val loss: 0.34215, acc: 53.95480, qwk: 0.76573
+
